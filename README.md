@@ -24,17 +24,15 @@ corners, and copy the exact command that installs any plugin.
 
 ## What you see
 
-A sidebar entry, a full page at `/radar`, and six model tools — all from one catalog.
+A sidebar entry and five model tools — all from one catalog.
 
 | Surface | What it does |
 |---|---|
 | **插件雷达 panel** (sidebar) | Browse all 6,896 plugins: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
 | Panel「方向」 | Category → topic → plugins, with coverage levels and both sort directions |
 | Panel「设置」 | Track your own npm packages; optional GitHub token (never required) |
-| `/radar` | The wide view: trend chart, full gap table, search |
 | `radar_gaps` | Which topics have 0–3 plugins? |
 | `radar_market` | How big is the market, what leads? |
-| `radar_trend` | Which directions are filling up? (12 months, from the catalog's own dates) |
 | `radar_plugin` | Who already did this? |
 | `radar_checkup` | Will this folder survive a market install? |
 | `radar_mine` | My downloads, stars, catalog presence, category rank |
@@ -47,8 +45,6 @@ Nothing below is required to use it, and there is no setup step:
   mirror (`dsh-plugin-catalog` tarball). Whichever answers first wins; results are
   cached six hours. Measured from a mainland network: 6.7 s when the canonical host is
   blocked, 0.7 s through the mirror, 50 ms from cache.
-- **Trend** — derived from each plugin's `added` date inside today's snapshot, so the
-  twelve-month curve exists on the first open. There is no local history to accumulate.
 - **Stars** — live from GitHub when the package has a repository (the catalog's URL, or
   the one npm publishes); otherwise the catalog's snapshot. A failure falls back
   silently instead of showing a broken number.
@@ -81,8 +77,8 @@ Only when you want it:
 - Coverage is a **lexical** match over `name + description`, so it over-counts
   (`ats` hits `formats`). Reported **0 is trustworthy**; a large number only means
   "not obviously unclaimed".
-- The trend curve is **cumulative** (by `added` date): it shows a niche filling up, and
-  cannot show withdrawals.
+- The 80 topics do **not** cover every plugin (about half match none). Browsing is the
+  full catalog; the topic ranking is for deciding what to build. Do not mix the two.
 - `checkup` judges packaging and supply-chain shape, not code quality or security.
 
 ## Privacy
@@ -94,14 +90,13 @@ Only when you want it:
 - A GitHub token, if you provide one, is stored in that `config.json` in plain text on
   this machine and is never returned by the API — only "a token is set".
 - `radar_checkup` reads the folder you point it at and writes nowhere.
-- The dashboard is served by your local DSH web server, same-origin, `no-store`.
+- The panel's data is served by your local DSH web server, same-origin, `no-store`.
 
 ## Development
 
 ```sh
 npm test                                              # smoke + host wiring + client (offline)
 node test/smoke.mjs --catalog ../market/plugins.json  # against the real 6,896-entry catalog
-node scripts/preview.mjs --catalog ../market/plugins.json --out radar-preview.html
 node scripts/sync.mjs                                 # copy into the desktop profile
 ```
 

@@ -1,14 +1,12 @@
 /**
  * 插件雷达 (Publisher Radar) — host entry.
  *
- * Registers six read-only tools, serves the dashboard, and exposes the JSON the
- * sidebar panel renders from. Nothing is fetched at load: the catalog is downloaded
- * on the first tool call or the first page view, so a DSH start never waits on
- * GitHub Pages.
+ * Registers five read-only tools and exposes the JSON the sidebar panel renders
+ * from. Nothing is fetched at load: the catalog is downloaded on the first tool call
+ * or the first panel paint, so a DSH start never waits on GitHub Pages.
  */
 import { createRadar } from './lib/radar.mjs';
 import { createTools } from './lib/tools.mjs';
-import { renderDashboard, renderError } from './lib/dashboard.mjs';
 import { repoOf } from './lib/github.mjs';
 import { defaultCacheDir } from './lib/catalog.mjs';
 import { loadPrefs, savePrefs, statusOf } from './lib/prefs.mjs';
@@ -19,7 +17,6 @@ import { join } from 'node:path';
 export const name = 'publisher-radar';
 export const inject = ['tools'];
 
-const PAGE_ROUTE = '/radar';
 const API_ROUTE = '/radar/api.json';
 const CONFIG_ROUTE = '/radar/config';
 
@@ -62,26 +59,6 @@ function mount(ctx, settings) {
           if (typeof inner.effect === 'function') inner.effect(() => disposer, label);
         };
 
-        publish(PAGE_ROUTE, async (request, response) => {
-          if (!allowGet(request, response)) return;
-          if (!hostAllowed(request, settings)) return forbid(response);
-          try {
-            const url = new URL(request.url ?? PAGE_ROUTE, 'http://127.0.0.1');
-            const query = (url.searchParams.get('q') ?? '').trim();
-            const force = (url.searchParams.get('force') ?? '') !== '';
-            if (force) await radar.refresh();
-            const overview = await radar.overview();
-            const [mine, trend, search] = await Promise.all([
-              radar.mine(undefined, { forceGithub: force }),
-              radar.trend(6),
-              query === '' ? Promise.resolve(null) : radar.search(query),
-            ]);
-            send(response, 200, 'text/html; charset=utf-8', renderDashboard({ overview, mine, query, search, trend }));
-          } catch (error) {
-            send(response, 503, 'text/html; charset=utf-8', renderError(error?.message ?? String(error)));
-          }
-        }, 'publisher-radar: dashboard route');
-
         publish(API_ROUTE, async (request, response) => {
           if (!allowGet(request, response)) return;
           if (!hostAllowed(request, settings)) return forbid(response);
@@ -96,9 +73,8 @@ function mount(ctx, settings) {
             const topicId = (url.searchParams.get('topic') ?? '').trim();
             const catName = (url.searchParams.get('cat') ?? '').trim();
             const browseMode = (url.searchParams.get('browse') ?? '') !== '';
-            const [mine, trend, search, topic, category, browse] = await Promise.all([
+            const [mine, search, topic, category, browse] = await Promise.all([
               radar.mine(undefined, { forceGithub: force }),
-              radar.trend(6),
               browseMode || query === '' ? Promise.resolve(null) : radar.search(query, 12),
               // `cat` narrows `topic`: with both, the answer is the plugins in that
               // intersection; with only `cat`, it is the topics that category covers.
@@ -116,13 +92,11 @@ function mount(ctx, settings) {
                 })
                 : Promise.resolve(null),
             ]);
-            const host = request?.headers?.host ?? '127.0.0.1';
             // Every entry block goes through the same shaping step (description cap,
             // install command for this profile), so it lives here once.
             const views = (list) => list.map((entry) => entryView(entry, profile));
             send(response, 200, 'application/json; charset=utf-8', JSON.stringify({
               schema: 'dsh-publisher-radar/v1',
-              url: `http://${host}/radar`,
               profile,
               fetchedAt: overview.fetchedAt,
               from: overview.from,
@@ -131,14 +105,6 @@ function mount(ctx, settings) {
               counts: overview.counts,
               categories: overview.stats.categories,
               gaps: overview.gaps,
-              trend: {
-                window: trend.window,
-                first: trend.first,
-                last: trend.last,
-                months: trend.months,
-                deltas: trend.deltas,
-                coverage: trend.coverage,
-              },
               browse: browse === null ? null : {
                 ...browse,
                 entries: views(browse.entries),
@@ -221,24 +187,25 @@ function mount(ctx, settings) {
       });
     }
   } catch (error) {
-    console.warn('publisher-radar: could not publish the dashboard routes', error);
+    console.warn('publisher-radar: could not publish the panel routes', error);
   }
 }
 
 function allowGet(request, response) {
   if (request?.method === 'GET' || request?.method === 'HEAD') return true;
   response.writeHead(405, { allow: 'GET, HEAD' });
-  response.end();  return false;
+  response.end();
+  return false;
 }
 
 /**
  * A browser trust fence.
  *
  * A plugin route sits outside the host's own auth gate, so without this check the
- * dashboard would be readable by anything that can reach the port. The page carries
- * only public catalog data, but "public data behind the same door as everything else"
- * is the host's decision, not ours — so the default is loopback only, and a profile
- * that is deliberately exposed can opt in.
+ * panel's API would be readable by anything that can reach the port. The payload
+ * carries only public catalog data, but "public data behind the same door as
+ * everything else" is the host's decision, not ours — so the default is loopback
+ * only, and a profile that is deliberately exposed can opt in.
  */
 function hostAllowed(request, settings) {
   if (settings?.allowRemote === true) return true;

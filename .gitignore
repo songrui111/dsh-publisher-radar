@@ -6,9 +6,6 @@ test/.tmp-cache/
 test/.tmp-home/
 test/*.log
 
-# generated preview (regenerate with: npm run snapshot)
-radar-preview.html
-
 # editor / OS noise
 .DS_Store
 Thumbs.db

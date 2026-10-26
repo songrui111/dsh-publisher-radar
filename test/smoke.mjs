@@ -14,13 +14,10 @@ import { fileURLToPath } from 'node:url';
 
 import { gapIndex, levelOf, TOPICS } from '../lib/topics.mjs';
 import { catalogStats, loadCatalog, parseCatalog, searchEntries, tarEntry } from '../lib/catalog.mjs';
-import { growthDeltas, growthSeries, monthOf, shiftMonth } from '../lib/growth.mjs';
 import { repoOf } from '../lib/github.mjs';
 import { normalizeRepository, npmFacts } from '../lib/npm.mjs';
 import { checkup } from '../lib/checkup.mjs';
 import { createTools } from '../lib/tools.mjs';
-import { renderDashboard } from '../lib/dashboard.mjs';
-import { trendMarkdown } from '../lib/report.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
@@ -153,22 +150,14 @@ await test('checkup flags a missing patch', () => {
 });
 
 await test('tools expose the documented surface', () => {
-  const radar = { gaps: async () => ({ rows: [], counts: { empty: 0, thin: 0, warming: 0, crowded: 0 }, fetchedAt: null, from: 'file', total: 0 }), overview: async () => null, search: async () => ({ query: '', entries: [], topics: [], fetchedAt: null, from: 'file' }), mine: async () => ({ rows: [], fetchedAt: null, from: 'file', total: 0, detected: null }), trend: async () => ({ months: [], window: 6, deltas: [], coverage: 0 }), checkup };
+  const radar = { gaps: async () => ({ rows: [], counts: { empty: 0, thin: 0, warming: 0, crowded: 0 }, fetchedAt: null, from: 'file', total: 0 }), overview: async () => null, search: async () => ({ query: '', entries: [], topics: [], fetchedAt: null, from: 'file' }), mine: async () => ({ rows: [], fetchedAt: null, from: 'file', total: 0, detected: null }), checkup };
   const tools = createTools(radar, { myPlugins: [] });
-  assert.deepEqual(tools.map((t) => t.name), ['radar_gaps', 'radar_market', 'radar_trend', 'radar_plugin', 'radar_checkup', 'radar_mine']);
+  assert.deepEqual(tools.map((t) => t.name), ['radar_gaps', 'radar_market', 'radar_plugin', 'radar_checkup', 'radar_mine']);
   for (const tool of tools) {
     assert.equal(typeof tool.execute, 'function', tool.name);
     assert.equal(tool.parameters.type, 'object', tool.name);
     assert.equal(typeof tool.output.schema, 'object', tool.name);
   }
-});
-
-await test('monthOf / shiftMonth walk calendar months', () => {
-  assert.equal(monthOf('2026-10-25'), '2026-10');
-  assert.equal(monthOf('nope'), null);
-  assert.equal(monthOf(null), null);
-  assert.equal(shiftMonth('2026-01', -1), '2025-12');
-  assert.equal(shiftMonth('2026-12', 1), '2027-01');
 });
 
 await test('a downloads 404 must not make a published package look unpublished', async () => {
@@ -202,45 +191,6 @@ await test('a registry 404 is what "missing" means', async () => {
   assert.equal(rows[0].missing, true);
 });
 
-await test('growthSeries is cumulative over added dates, starting where data starts', () => {
-  const { entries } = parseCatalog({
-    plugins: [
-      { name: 'a', owner: 'x', category: 'tools', description: { en: 'kanban board' }, added: '2026-08-01' },
-      { name: 'b', owner: 'x', category: 'tools', description: { en: 'kanban board' }, added: '2026-09-01' },
-      { name: 'c', owner: 'x', category: 'tools', description: { en: 'unrelated' }, added: '2026-09-15' },
-    ],
-  });
-  const series = growthSeries(entries, { months: 3 });
-  // The window may not begin before the first dated entry: a leading empty month
-  // would render as "0 → 3" and read as market growth when it is coverage.
-  assert.deepEqual(series.months.map((m) => m.month), ['2026-08', '2026-09']);
-  assert.deepEqual(series.months.map((m) => m.total), [1, 3]);
-});
-
-await test('growthSeries computes a per-topic cumulative curve', () => {
-  const { entries } = parseCatalog({
-    plugins: [
-      { name: 'a', owner: 'x', category: 'tools', description: { en: 'kanban board' }, added: '2026-08-01' },
-      { name: 'b', owner: 'x', category: 'tools', description: { en: 'kanban board' }, added: '2026-09-01' },
-    ],
-  });
-  const series = growthSeries(entries, { months: 2, topics: TOPICS });
-  assert.equal(series.months[0].topics.kanban, 1);
-  assert.equal(series.months[1].topics.kanban, 2);
-});
-
-await test('growthDeltas reports only what moved', () => {
-  const series = {
-    months: [
-      { month: '2026-08', total: 1, topics: { kanban: 1, logistics: 0 } },
-      { month: '2026-09', total: 3, topics: { kanban: 2, logistics: 0 } },
-    ],
-  };
-  const deltas = growthDeltas(series);
-  assert.deepEqual(deltas, [{ id: 'kanban', before: 1, now: 2, delta: 1 }]);
-  assert.match(trendMarkdown({ ...series, deltas, window: 2, coverage: 2, total: 3, labels: { kanban: '看板' } }), /看板/);
-});
-
 await test('tarEntry reads one file out of a gzipped npm tarball', async () => {
   const { gzipSync } = await import('node:zlib');
   const body = Buffer.from('{"plugins":[{"name":"x"}]}', 'utf8');
@@ -270,38 +220,6 @@ await test('normalizeRepository accepts both npm shapes, and repoOf reads them',
   assert.equal(normalizeRepository(null), null);
   // The point of the pair: a package outside the catalog can still yield a repo.
   assert.equal(repoOf(normalizeRepository({ url: 'git+https://github.com/a/b.git' })), 'a/b');
-});
-
-await test('dashboard escapes attacker-controlled catalog text', async () => {
-  const overview = {
-    stats: { total: 1, withNpm: 0, categories: [{ name: 'tools', count: 1 }], months: [], topDownloads: [], topStars: [], newest: [] },
-    counts: { empty: 1, thin: 0, warming: 0, crowded: 0 },
-    gaps: [{ id: 'x', label: '<script>alert(1)</script>', count: 0, level: 'empty', samples: ['<img src=x onerror=alert(1)>'] }],
-    fetchedAt: new Date().toISOString(),
-    from: 'cache',
-  };
-  const html = renderDashboard({ overview, mine: { rows: [] }, query: null, search: null });
-  assert.match(html, /插件雷达/);
-  assert.ok(!html.includes('<script>alert(1)</script>'), 'raw script tag must be escaped');
-  assert.match(html, /&lt;script&gt;/);
-});
-
-await test('dashboard renders the query block', () => {
-  const overview = {
-    stats: { total: 2, withNpm: 1, categories: [], months: [], topDownloads: [], topStars: [], newest: [] },
-    counts: { empty: 0, thin: 0, warming: 1, crowded: 0 },
-    gaps: [],
-    fetchedAt: new Date().toISOString(),
-    from: 'network',
-  };
-  const html = renderDashboard({
-    overview,
-    mine: { rows: [] },
-    query: '物流',
-    search: { entries: [{ name: 'dsh-x', owner: 'o', category: [], stars: 1, downloads: null }], topics: [{ id: 'logistics', label: '物流 / 运单', count: 0, level: 'empty' }] },
-  });
-  assert.match(html, /物流/);
-  assert.match(html, /dsh-x/);
 });
 
 const catalogFlag = process.argv.indexOf('--catalog');

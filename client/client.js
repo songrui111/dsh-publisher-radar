@@ -484,12 +484,6 @@ window.__ModuleLoader__.load({
           Stat(counts.crowded || 0, '红海方向'),
         ))
 
-        const trend = home.trend
-        if (trend && trend.first && trend.months.length > 0) {
-          children.push(h('div', { style: S.note, key: 'trend' },
-            `${trend.first} → ${trend.last}：在册 ${trend.months[0].total} → ${trend.months[trend.months.length - 1].total}，${(trend.deltas || []).length} 个主题在变挤。`))
-        }
-
         // The full catalog is one tap away: 6,896 records, paged, filterable.
         children.push(h('button', {
           key: 'browse-all',

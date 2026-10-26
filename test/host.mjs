@@ -85,10 +85,10 @@ const offline = () => { throw new Error('offline test: no network allowed'); };
 
 apply(ctx, { catalogPath, cacheDir, dshHome: homeDir, myPlugins: [], fetchImpl: offline });
 
-assert.deepEqual(tools.map((t) => t.name), ['radar_gaps', 'radar_market', 'radar_trend', 'radar_plugin', 'radar_checkup', 'radar_mine']);
+assert.deepEqual(tools.map((t) => t.name), ['radar_gaps', 'radar_market', 'radar_plugin', 'radar_checkup', 'radar_mine']);
 console.log(`  ok  ${tools.length} tools registered`);
 
-assert.deepEqual([...routes.keys()].sort(), ['/radar', '/radar/api.json', '/radar/config']);
+assert.deepEqual([...routes.keys()].sort(), ['/radar/api.json', '/radar/config']);
 console.log('  ok  both routes mounted');
 
 // Every tool must carry the contract the platform validates before it calls it.
@@ -142,16 +142,6 @@ function call(handler, url, method = 'GET', headers = { host: '127.0.0.1:13481' 
   });
 }
 
-const page = await call(routes.get('/radar'), '/radar');
-assert.equal(page.status, 200);
-assert.match(page.headers['content-type'], /text\/html/);
-assert.match(page.body, /插件雷达/);
-assert.match(page.body, /关键词空位榜/);
-assert.match(page.body, /市场走势/);
-assert.match(page.body, /我的插件/);
-assert.equal(page.headers['cache-control'], 'no-store');
-console.log(`  ok  GET /radar → 200 html (${page.body.length} bytes)`);
-
 const api = await call(routes.get('/radar/api.json'), '/radar/api.json');
 assert.equal(api.status, 200);
 const parsed = JSON.parse(api.body);
@@ -159,16 +149,10 @@ assert.equal(parsed.schema, 'dsh-publisher-radar/v1');
 assert.ok(parsed.total >= 3, 'api reports a total');
 assert.ok(Array.isArray(parsed.gaps) && parsed.gaps.length > 0);
 assert.equal(parsed.gaps.length, TOPICS.length, 'one row per taxonomy topic');
-assert.ok(Array.isArray(parsed.trend?.months) && parsed.trend.months.length >= 2, 'trend months are exposed');
-assert.equal(parsed.trend.window, 6);
-console.log(`  ok  GET /radar/api.json → ${parsed.total} plugins, ${parsed.gaps.length} topics, trend ${parsed.trend.months.length} months`);
+assert.equal(api.headers['cache-control'], 'no-store');
+console.log(`  ok  GET /radar/api.json → ${parsed.total} plugins, ${parsed.gaps.length} topics`);
 
-const search = await call(routes.get('/radar'), '/radar?q=trello');
-assert.equal(search.status, 200);
-assert.match(search.body, /trello/i);
-console.log('  ok  GET /radar?q= → search block renders');
-
-const post = await call(routes.get('/radar'), '/radar', 'POST');
+const post = await call(routes.get('/radar/api.json'), '/radar/api.json', 'POST');
 assert.equal(post.status, 405);
 assert.equal(post.headers.allow, 'GET, HEAD');
 console.log('  ok  non-GET is refused with 405');
@@ -180,8 +164,6 @@ assert.equal(guarded.status, 200);
 assert.equal(JSON.parse(guarded.body).from, 'file', 'a forced refresh still honours an explicit catalog file');
 console.log('  ok  ?force=1 re-runs the load path');
 
-const remote = await call(routes.get('/radar'), '/radar', 'GET', { host: '192.168.1.5:13481' });
-assert.equal(remote.status, 403);
 const remoteApi = await call(routes.get('/radar/api.json'), '/radar/api.json', 'GET', { host: '192.168.1.5:13481' });
 assert.equal(remoteApi.status, 403);
 const loopback = await call(routes.get('/radar/api.json'), '/radar/api.json', 'GET', { host: 'localhost:13481' });
@@ -197,9 +179,10 @@ assert.ok(searchBody.search !== null, 'search block is present');
 assert.equal(searchBody.search.query, 'kanban');
 assert.ok(Array.isArray(searchBody.search.entries) && searchBody.search.entries.length > 0, 'kanban has hits');
 assert.ok(Array.isArray(searchBody.search.topics) && searchBody.search.topics.length > 0);
-assert.match(searchBody.url, /^http:\/\/127\.0\.0\.1:13481\/radar$/);
+// The page route is gone, so nothing may point the panel at a URL that no longer exists.
+assert.equal(searchBody.url, undefined, 'no dead link to the removed /radar page');
 const hit = searchBody.search.entries[0];
-for (const field of ['name', 'owner', 'categories', 'stars', 'downloads', 'install', 'description']) {
+for (const field of ['name', 'owner', 'categories', 'stars', 'downloads', 'install', 'installCommand', 'description']) {
   assert.ok(field in hit, `search hit carries ${field}`);
 }
 console.log(`  ok  GET /radar/api.json?q= → ${searchBody.search.entries.length} hits, detail fields present`);
@@ -349,25 +332,21 @@ const market = await tools[1].execute({});
 assert.match(market.markdown, /插件市场概览/);
 console.log('  ok  radar_market runs');
 
-const trend = await tools[2].execute({ months: 6 });
-assert.match(trend.markdown, /市场走势/);
-console.log('  ok  radar_trend runs from added dates (no history needed)');
-
-const lookup = await tools[3].execute({ query: 'trello' });
+const lookup = await tools[2].execute({ query: 'trello' });
 assert.match(lookup.markdown, /trello/i);
 console.log('  ok  radar_plugin runs');
 
-const check = await tools[4].execute({ dir: root });
+const check = await tools[3].execute({ dir: root });
 assert.match(check.markdown, /发布前体检/);
 assert.match(check.markdown, /PASS|WARN/);
 console.log('  ok  radar_checkup runs against its own folder');
 
-const mine = await tools[5].execute({ packages: [] });
+const mine = await tools[4].execute({ packages: [] });
 assert.match(mine.markdown, /我的插件/);
 console.log('  ok  radar_mine degrades cleanly with no network');
 
 // A bad query must fail loudly rather than return an empty table.
-await assert.rejects(() => tools[3].execute({ query: '   ' }), /non-empty/);
+await assert.rejects(() => tools[2].execute({ query: '   ' }), /non-empty/);
 console.log('  ok  radar_plugin rejects an empty query');
 
 // With a catalog file supplied there is no download, so the ONLY thing this plugin
