@@ -1,0 +1,64 @@
+name: release
+
+# Four channels carry the same commit and they are not interchangeable:
+#   GitHub Release asset → what the plugin market installs from
+#   npm                  → the package itself
+#   catalog entry        → a PR to awesome-dsh-plugin/awesome-dsh-plugin (manual)
+#   a working profile    → scripts/sync.mjs, then a DSH restart
+#
+# The asset is published FIRST because it is the market's critical path; a failing
+# npm publish then fails the run loudly without withholding the release.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # The token must be visible to a step-level `if:` — `secrets.*` is not available
+    # there, which is why the condition reads job-level `env` instead.
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Smoke test
+        run: node test/smoke.mjs && node test/host.mjs
+
+      - name: Pack
+        id: pack
+        run: |
+          set -euo pipefail
+          name=$(npm pack --silent)
+          echo "tarball=$name" >> "$GITHUB_OUTPUT"
+          # The market's URL points at a fixed name; never rename this copy.
+          cp "$name" dsh-publisher-radar.tgz
+          tar -tzf dsh-publisher-radar.tgz | head -40
+
+      - name: Publish release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dsh-publisher-radar.tgz
+          generate_release_notes: true
+
+      - name: Publish to npm
+        if: env.NPM_TOKEN != ''
+        run: |
+          set -euo pipefail
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          npm publish --access public 2>&1 | tee npm-publish.log || {
+            echo "::error::npm publish failed: $(tail -20 npm-publish.log | tr '\n' ' ')"
+            exit 1
+          }

@@ -1,0 +1,6 @@
+{
+  "name": "fixture-broken-plugin",
+  "version": "0.0.1",
+  "description": "A plugin with no dsh.bundle.patch, used to prove the checkup fails closed.",
+  "license": "MIT"
+}

@@ -1,0 +1,10 @@
+# dsh bundle patch: inserts this plugin into a profile's layer stack.
+#
+# `name` is relative on purpose. DSH anchors a relative `name:` beside the patch
+# file that declared it, so this row loads this bundle's own index.js whatever the
+# install folder is called (`node_modules/dsh-publisher-radar` from npm, or a
+# `file:` link whose folder has another name). A bare package name would resolve
+# in only one of those layouts.
+- insert:
+    - id: publisher-radar
+      name: './index.js'

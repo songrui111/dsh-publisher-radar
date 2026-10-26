@@ -1,0 +1,31 @@
+{
+  "source": "smoke-fixture",
+  "updated": "2026-01-01",
+  "plugins": [
+    {
+      "name": "dsh-trello-bridge",
+      "owner": "fixture",
+      "category": "tools",
+      "description": { "zh": "把 Trello 看板接进来", "en": "Trello boards inside DSH" },
+      "stars": 0,
+      "npm": null
+    },
+    {
+      "name": "dsh-kanban",
+      "owner": "fixture",
+      "category": "workflow",
+      "description": { "en": "a local kanban board" },
+      "stars": 16,
+      "npm": null
+    },
+    {
+      "name": "dsh-plugin-doctor",
+      "owner": "fixture",
+      "category": "dev",
+      "description": { "zh": "插件诊断" },
+      "stars": 5,
+      "npm": "@fixture/doctor",
+      "downloads": 4898
+    }
+  ]
+}

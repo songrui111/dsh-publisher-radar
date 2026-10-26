@@ -1,0 +1,66 @@
+{
+  "name": "dsh-publisher-radar",
+  "version": "0.4.0",
+  "description": "插件雷达 (Publisher Radar) for DeepSeek Harness: a browser for the whole DSH plugin market — all 6,896 plugins searchable, pageable, filterable, each with a copy-ready install command — plus zero-config intelligence for plugin authors: keyword-gap ranking, trend from the catalog's own dates, competitor lookup, your own downloads/stars. · DSH 插件市场浏览器 + 作者情报台：全量插件可搜可翻可筛、一键复制安装命令，另有空位榜、市场走势、竞品查询与自己插件的下载与 Star。",
+  "type": "module",
+  "main": "index.js",
+  "author": "宋锐 <2047751661@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/songrui111/dsh-publisher-radar.git"
+  },
+  "homepage": "https://github.com/songrui111/dsh-publisher-radar#readme",
+  "bugs": {
+    "url": "https://github.com/songrui111/dsh-publisher-radar/issues"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "client",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.1.7-rc.2"
+  },
+  "scripts": {
+    "test": "node test/smoke.mjs && node test/host.mjs && node test/client.mjs",
+    "test:live": "node test/smoke.mjs --catalog ../market/plugins.json && node test/host.mjs --catalog ../market/plugins.json",
+    "snapshot": "node scripts/preview.mjs --out radar-preview.html",
+    "preview": "node scripts/preview.mjs --catalog ../market/plugins.json",
+    "sync": "node scripts/sync.mjs"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "plugin-market",
+    "market-intelligence",
+    "discovery",
+    "publisher",
+    "plugin-author",
+    "trend"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}
