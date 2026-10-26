@@ -1,0 +1,2 @@
+# Keep the tarball byte-identical across platforms: no CRLF in a published package.
+* text=auto eol=lf

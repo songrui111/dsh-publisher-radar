@@ -117,6 +117,9 @@ function mount(ctx, settings) {
                 : Promise.resolve(null),
             ]);
             const host = request?.headers?.host ?? '127.0.0.1';
+            // Every entry block goes through the same shaping step (description cap,
+            // install command for this profile), so it lives here once.
+            const views = (list) => list.map((entry) => entryView(entry, profile));
             send(response, 200, 'application/json; charset=utf-8', JSON.stringify({
               schema: 'dsh-publisher-radar/v1',
               url: `http://${host}/radar`,
@@ -138,11 +141,11 @@ function mount(ctx, settings) {
               },
               browse: browse === null ? null : {
                 ...browse,
-                entries: browse.entries.map((entry) => entryView(entry, profile)),
+                entries: views(browse.entries),
               },
               search: search === null ? null : {
                 query,
-                entries: search.entries.map((entry) => entryView(entry, profile)),
+                entries: views(search.entries),
                 topics: search.topics,
               },
               topic: topic === null ? null : {
@@ -151,7 +154,7 @@ function mount(ctx, settings) {
                 count: topic.topic.count,
                 level: topic.topic.level,
                 total: topic.total,
-                entries: topic.entries.map((entry) => entryView(entry, profile)),
+                entries: views(topic.entries),
               },
               category: category === null ? null : (category.kind === 'topics'
                 ? {
@@ -164,7 +167,7 @@ function mount(ctx, settings) {
                   count: category.category.count,
                   topic: category.topic,
                   total: category.total,
-                  entries: category.entries.map((entry) => entryView(entry, profile)),
+                  entries: views(category.entries),
                 }),
               mine: mine.rows.map((row) => ({
                 package: row.package,
