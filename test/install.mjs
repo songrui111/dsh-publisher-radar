@@ -25,12 +25,17 @@ rmSync(work, { recursive: true, force: true });
 mkdirSync(work, { recursive: true });
 writeFileSync(join(work, 'package.json'), JSON.stringify({ name: 'install-probe', private: true, version: '0.0.0' }, null, 2));
 
-// Download with fetch first: npm's own GitHub path times out on this network, and the
-// market also downloads the asset before unpacking it into a profile. A local path is
-// accepted instead, which is how this runs when GitHub is unreachable — the caller is
-// then responsible for proving that file is the published artifact (see hash-check).
+// A local path, an http(s) URL, or an npm spec (`dsh-publisher-radar@1.0.1`).
 const localTgz = join(work, 'publisher-radar.tgz');
-if (/^https?:/i.test(tarball)) {
+const isLocalFile = !/^https?:/i.test(tarball) && existsSync(tarball);
+const isSpec = !/^https?:/i.test(tarball) && !isLocalFile;
+let installTarget = './publisher-radar.tgz';
+
+if (isSpec) {
+  // Installs from the registry — the path a user's `dsh plugin add dsh-publisher-radar` takes.
+  installTarget = tarball;
+  console.log(`using spec      : ${tarball}`);
+} else if (/^https?:/i.test(tarball)) {
   console.log(`downloading     : ${tarball}`);
   const response = await fetch(tarball, { redirect: 'follow' });
   if (!response.ok) throw new Error(`download failed: HTTP ${response.status}`);
@@ -43,8 +48,8 @@ if (/^https?:/i.test(tarball)) {
   console.log(`using local     : ${tarball} (${bytes.length} bytes)`);
 }
 
-console.log('installing      : npm install ./publisher-radar.tgz');
-execFileSync(npmCli, ['install', './publisher-radar.tgz', '--no-audit', '--no-fund', '--loglevel=error'], {
+console.log(`installing      : npm install ${installTarget}`);
+execFileSync(npmCli, ['install', installTarget, '--no-audit', '--no-fund', '--loglevel=error'], {
   cwd: work,
   stdio: 'inherit',
   shell: true,
