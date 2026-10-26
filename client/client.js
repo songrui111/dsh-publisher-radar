@@ -194,10 +194,14 @@ window.__ModuleLoader__.load({
       const [sortDir, setSortDir] = React.useState('asc')
       const [showAll, setShowAll] = React.useState(false)
 
-      const load = React.useCallback((queryString, build) => {
+      // `quiet` marks a follow-up pass: it must not flip the busy badge or replace a
+      // good payload with an error banner.
+      const load = React.useCallback((queryString, build, quiet) => {
         let cancelled = false
-        setBusy(true)
-        setError(null)
+        if (quiet !== true) {
+          setBusy(true)
+          setError(null)
+        }
         const url = queryString ? `${API}?${queryString}` : API
         fetch(url, { headers: { accept: 'application/json' }, cache: 'no-store' })
           .then((response) => {
@@ -205,17 +209,26 @@ window.__ModuleLoader__.load({
             return response.json()
           })
           .then((body) => { if (!cancelled) build(body) })
-          .catch((err) => { if (!cancelled) setError(err && err.message ? err.message : String(err)) })
-          .finally(() => { if (!cancelled) setBusy(false) })
+          .catch((err) => { if (!cancelled && quiet !== true) setError(err && err.message ? err.message : String(err)) })
+          .finally(() => { if (!cancelled && quiet !== true) setBusy(false) })
         return () => { cancelled = true }
       }, [])
 
-      const loadHome = React.useCallback((force) => load(force ? 'force=1' : '', (body) => {
-        setHome(body)
-        setList(null)
-        setDetail(null)
-        setBrowse(null)
-      }), [load])
+      // Two passes on purpose. The first paints everything the catalog already holds
+      // (instant); the second fetches the only network-bound section — npm downloads
+      // and GitHub stars — and drops it in when it arrives.
+      const loadHome = React.useCallback((force) => {
+        const base = force ? 'force=1' : ''
+        load(base, (body) => {
+          setHome(body)
+          setList(null)
+          setDetail(null)
+          setBrowse(null)
+        })
+        load(base === '' ? 'mine=1' : 'mine=1&stars=force', (body) => {
+          setHome((current) => ({ ...(current === null ? body : current), mine: body.mine, detected: body.detected, config: body.config }))
+        }, true)
+      }, [load])
 
       React.useEffect(() => loadHome(), [loadHome])
 

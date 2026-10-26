@@ -276,7 +276,14 @@ assert.deepEqual(savedBody.myPlugins, ['dsh-wsl-tool', 'dsh-zotero']);
 assert.equal(savedBody.hasToken, true);
 console.log('  ok  POST /radar/config saves a LIST of packages + token');
 
-const afterSave = await call(routes.get('/radar/api.json'), '/radar/api.json');
+// The plain payload must NOT pay for npm/GitHub: that lookup is what made every
+// panel click take 1–6 s. It is opt-in via ?mine=1, which the panel requests after
+// its first paint.
+const cheap = await call(routes.get('/radar/api.json'), '/radar/api.json?browse=1');
+assert.equal(JSON.parse(cheap.body).mine, null, 'a browse request must not query npm');
+console.log('  ok  the plain payload skips the network-bound mine block');
+
+const afterSave = await call(routes.get('/radar/api.json'), '/radar/api.json?mine=1');
 assert.ok(!afterSave.body.includes('ghp_testtoken123'), 'the token must never be readable through the API');
 const afterBody = JSON.parse(afterSave.body);
 assert.deepEqual(afterBody.config.myPlugins, ['dsh-wsl-tool', 'dsh-zotero']);
@@ -284,14 +291,14 @@ assert.equal(afterBody.config.hasToken, true);
 // Both tracked packages reach the mine section — the point of a list.
 assert.equal(afterBody.mine.length, 2, 'both packages are looked up');
 assert.deepEqual(afterBody.mine.map((row) => row.package).sort(), ['dsh-wsl-tool', 'dsh-zotero']);
-console.log('  ok  GET /radar/api.json exposes both packages and only "hasToken"');
+console.log('  ok  GET ?mine=1 exposes both packages and only "hasToken"');
 
 // A `file:`-installed, never-published plugin must still be describable: npm has no
 // record of it, but the profile's node_modules does.
 const localSaved = await call(routes.get('/radar/config'), '/radar/config', 'POST', { host: '127.0.0.1:13481' },
   JSON.stringify({ myPlugins: ['dsh-local-fixture'] }));
 assert.deepEqual(JSON.parse(localSaved.body).myPlugins, ['dsh-local-fixture']);
-const localApi = await call(routes.get('/radar/api.json'), '/radar/api.json');
+const localApi = await call(routes.get('/radar/api.json'), '/radar/api.json?mine=1');
 const localRow = JSON.parse(localApi.body).mine.find((row) => row.package === 'dsh-local-fixture');
 assert.ok(localRow, 'the local package is reported');
 assert.equal(localRow.local, true, 'marked as local, not missing');

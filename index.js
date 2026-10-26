@@ -73,8 +73,15 @@ function mount(ctx, settings) {
             const topicId = (url.searchParams.get('topic') ?? '').trim();
             const catName = (url.searchParams.get('cat') ?? '').trim();
             const browseMode = (url.searchParams.get('browse') ?? '') !== '';
+            // `mine` is the only network-bound block (npm + GitHub, 1–6 s cold), and
+            // the panel asks for it in a second, quiet request so the first paint is
+            // not held hostage by it.
+            const wantMine = (url.searchParams.get('mine') ?? '') !== '';
+            // `stars=force` refreshes only the GitHub numbers: the panel's second pass
+            // must not make a second 8.7 MB catalog download just to re-read stars.
+            const forceStars = force || (url.searchParams.get('stars') ?? '') === 'force';
             const [mine, search, topic, category, browse] = await Promise.all([
-              radar.mine(undefined, { forceGithub: force }),
+              wantMine ? radar.mine(undefined, { forceGithub: forceStars }) : Promise.resolve(null),
               browseMode || query === '' ? Promise.resolve(null) : radar.search(query, 12),
               // `cat` narrows `topic`: with both, the answer is the plugins in that
               // intersection; with only `cat`, it is the topics that category covers.
@@ -135,7 +142,7 @@ function mount(ctx, settings) {
                   total: category.total,
                   entries: views(category.entries),
                 }),
-              mine: mine.rows.map((row) => ({
+              mine: mine === null ? null : mine.rows.map((row) => ({
                 package: row.package,
                 version: row.version,
                 downloads: row.downloads,
@@ -151,7 +158,7 @@ function mount(ctx, settings) {
                 pushedAt: row.pushedAt,
                 rank: row.rank,
               })),
-              detected: mine.detected,
+              detected: mine === null ? null : mine.detected,
               config: statusOf({ myPlugins: merged.myPlugins ?? [], githubToken: merged.githubToken ?? '' }),
             }, null, 2));
           } catch (error) {
