@@ -18,7 +18,7 @@ prove npm was published, and npm does not prove the market can install you.
 cd publisher-radar
 git init
 git add -A
-git commit -m "插件雷达 0.4.0: full market browser + author intelligence"
+git commit -m "插件雷达 1.0.1: full market browser + author intelligence"
 
 # 2. create the empty repo on GitHub first, then:
 git remote add origin https://github.com/songrui111/dsh-publisher-radar.git
@@ -29,8 +29,8 @@ git push -u origin main
 Then create the first release. The tag is what runs the pipeline:
 
 ```sh
-git tag -a v0.4.0 -m "插件雷达 0.4.0"
-git push origin v0.4.0
+git tag -a v1.0.1 -m "插件雷达 1.0.1"
+git push origin v1.0.1
 ```
 
 Before tagging, add the secret the workflow needs:

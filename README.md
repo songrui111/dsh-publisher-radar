@@ -100,8 +100,14 @@ Only when you want it:
 ```sh
 npm test                                              # smoke + host wiring + client (offline)
 node test/smoke.mjs --catalog ../market/plugins.json  # against the real catalog snapshot
+npm run test:install                                  # pack, install into a temp dir, boot it
 node scripts/sync.mjs                                 # copy into the desktop profile
 ```
+
+`test:install` is the one that matters before a release: it takes the tarball a user
+would download, `npm install`s it into an empty directory, then imports the installed
+copy and asserts it registers its five tools and two routes. Packaging mistakes that
+pass a source-tree test (a missing file, an absolute `name:` in the patch) fail here.
 
 No build step, no runtime dependencies. `lib/` ships as authored; the browser half is
 hand-written plain JS (no JSX, no bundler), the same shape DSH's own panels use.

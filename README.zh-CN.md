@@ -93,8 +93,11 @@ GitHub token 只在你想看**实时 star** 时才需要；不填就用目录快
 ```sh
 npm test                                              # 单测 + 宿主接线 + 浏览器半区（离线）
 node test/smoke.mjs --catalog ../market/plugins.json  # 对真实目录快照跑
+npm run test:install                                  # 打包 → 装进空目录 → 启动它
 node scripts/sync.mjs                                 # 复制进 desktop profile
 ```
+
+`test:install` 是发布前最该跑的那条：它拿用户会下载的那个 tarball，`npm install` 进一个空目录，再把安装后的那份代码导入启动，断言它注册了 5 个工具和 2 条路由。源码树里能过、打包后却坏的错误（漏文件、patch 里写了绝对路径）都会在这里现形。
 
 没有构建步骤、没有运行时依赖。`lib/` 就是发布的源码；浏览器半区是手写的纯 JS（无 JSX、无打包器），与 DSH 自带面板同一形状。
 
