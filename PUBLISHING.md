@@ -69,7 +69,7 @@ url         : https://github.com/songrui111/dsh-publisher-radar
 page        : https://github.com/songrui111/dsh-publisher-radar#readme
 category    : tools          ← pick the bucket it belongs in from the catalog's own list
 npm         : dsh-publisher-radar
-description : 全量浏览 DSH 插件市场：6,896 个插件可搜可翻可筛，一键复制安装命令；
+description : 全量浏览 DSH 插件市场：6000+ 个插件可搜可翻可筛，一键复制安装命令；
               另有空位榜、市场走势、竞品查询、自己插件的下载与 Star。
               A browser for the whole DSH plugin market, plus author intelligence.
 install     : dsh plugin --profile <profile> add dsh-publisher-radar

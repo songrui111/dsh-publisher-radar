@@ -2,17 +2,19 @@
 
 **A browser for the DSH plugin market, plus the author's radar — install it and it works.**
 
-The sidebar **插件雷达** searches and pages through all **6,896 plugins**, drills from a
-market category to a topic to the plugins themselves, and hands you the install command
-for any one of them — while still ranking which corners of the market are empty.
+The sidebar **插件雷达** searches and pages through the **whole plugin market** — several
+thousand entries and growing, with the live count on the panel — drills from a market
+category to a topic to the plugins themselves, and hands you the install command for any
+one of them, while still ranking which corners are empty.
 
 [简体中文](README.zh-CN.md) · MIT · [Publishing](PUBLISHING.md)
 
 ## Why
 
-The DSH marketplace has **6,896 plugins** (2026-10-26 snapshot), and until now there was
-no way to look at it from inside DSH — no search, no paging, no way to see what a plugin
-is without leaving the app. Two harder questions followed:
+The DSH marketplace passed **6,000 plugins** in 2026 and keeps growing — the panel always
+shows the current count, because it reads the catalog rather than a number written here.
+Until now there was no way to look at that market from inside DSH — no search, no paging,
+no way to see what a plugin is without leaving the app. Two harder questions followed:
 
 1. *Is anyone already doing this?* — names collide (five authors ship a
    `dsh-plugin-doctor`), and real competitors describe themselves with different words.
@@ -28,7 +30,7 @@ A sidebar entry and five model tools — all from one catalog.
 
 | Surface | What it does |
 |---|---|
-| **插件雷达 panel** (sidebar) | Browse all 6,896 plugins: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
+| **插件雷达 panel** (sidebar) | Browse the whole market: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
 | Panel「方向」 | Category → topic → plugins, with coverage levels and both sort directions |
 | Panel「设置」 | Track your own npm packages; optional GitHub token (never required) |
 | `radar_gaps` | Which topics have 0–3 plugins? |
@@ -96,7 +98,7 @@ Only when you want it:
 
 ```sh
 npm test                                              # smoke + host wiring + client (offline)
-node test/smoke.mjs --catalog ../market/plugins.json  # against the real 6,896-entry catalog
+node test/smoke.mjs --catalog ../market/plugins.json  # against the real catalog snapshot
 node scripts/sync.mjs                                 # copy into the desktop profile
 ```
 

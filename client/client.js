@@ -497,7 +497,7 @@ window.__ModuleLoader__.load({
           Stat(counts.crowded || 0, '红海方向'),
         ))
 
-        // The full catalog is one tap away: 6,896 records, paged, filterable.
+        // The whole catalog is one tap away: paged, filterable, sortable.
         children.push(h('button', {
           key: 'browse-all',
           style: S.btnPrimary,

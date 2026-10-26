@@ -1,7 +1,7 @@
 {
   "name": "dsh-publisher-radar",
   "version": "0.4.0",
-  "description": "插件雷达 (Publisher Radar) for DeepSeek Harness: a browser for the whole DSH plugin market — all 6,896 plugins searchable, pageable, filterable, each with a copy-ready install command — plus zero-config intelligence for plugin authors: keyword-gap ranking, competitor lookup, your own downloads/stars. · DSH 插件市场浏览器 + 作者情报台：全量插件可搜可翻可筛、一键复制安装命令，另有空位榜、竞品查询与自己插件的下载与 Star。",
+  "description": "插件雷达 (Publisher Radar) for DeepSeek Harness: a browser for the whole DSH plugin market — 6,000+ plugins searchable, pageable, filterable, each with a copy-ready install command — plus zero-config intelligence for plugin authors: keyword-gap ranking, competitor lookup, your own downloads/stars. · DSH 插件市场浏览器 + 作者情报台：6,000+ 插件可搜可翻可筛、一键复制安装命令，另有空位榜、竞品查询与自己插件的下载与 Star。",
   "type": "module",
   "main": "index.js",
   "author": "宋锐 <2047751661@qq.com>",

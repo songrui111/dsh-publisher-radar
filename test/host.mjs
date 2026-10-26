@@ -228,14 +228,16 @@ assert.ok(drillBody.category.entries.length > 0);
 assert.ok('install' in drillBody.category.entries[0]);
 console.log(`  ok  GET ?cat=dev&topic=${firstTopic} → ${drillBody.category.entries.length} plugins`);
 
-// The full catalog, paged: every one of the ~6,900 records must be reachable.
+// The whole catalog, paged: every record must be reachable. The count is read from
+// the payload rather than hardcoded — the market grows, and a test that pins today's
+// size would fail tomorrow for no good reason.
 const page1 = await call(routes.get('/radar/api.json'), '/radar/api.json?browse=1');
 assert.equal(page1.status, 200);
 const b1 = JSON.parse(page1.body).browse;
 assert.equal(b1.pageSize, 30);
 assert.equal(b1.entries.length, 30);
-assert.equal(b1.total, 6896);
-assert.equal(b1.pages, Math.ceil(6896 / 30));
+assert.ok(b1.total > 1000, 'a large market');
+assert.equal(b1.pages, Math.ceil(b1.total / 30));
 assert.ok(b1.page === 1);
 assert.ok('installCommand' in b1.entries[0], 'install command travels with each entry');
 console.log(`  ok  GET ?browse=1 → page ${b1.page}/${b1.pages}, ${b1.total} plugins`);
@@ -248,7 +250,7 @@ console.log('  ok  ?browse=1&page=2 → different slice');
 
 const filtered = await call(routes.get('/radar/api.json'), '/radar/api.json?browse=1&cat=ui');
 const bf = JSON.parse(filtered.body).browse;
-assert.equal(bf.total, 1326, 'ui has 1326 plugins');
+assert.ok(bf.total > 0 && bf.total < b1.total, 'a category is a proper subset of the market');
 console.log(`  ok  ?browse=1&cat=ui → ${bf.total} plugins`);
 
 const starred = await call(routes.get('/radar/api.json'), '/radar/api.json?browse=1&sort=stars&dir=desc&pageSize=10');
@@ -261,7 +263,7 @@ console.log(`  ok  ?browse=1&sort=stars → top is ${bs.entries[0].name} (★${b
 
 const searched2 = await call(routes.get('/radar/api.json'), '/radar/api.json?browse=1&q=memory');
 const bq = JSON.parse(searched2.body).browse;
-assert.ok(bq.total > 0 && bq.total < 6896, 'search narrows the set');
+assert.ok(bq.total > 0 && bq.total < b1.total, 'search narrows the set');
 console.log(`  ok  ?browse=1&q=memory → ${bq.total} results`);
 
 // Saving the panel's own settings: MULTIPLE packages and an optional token, token

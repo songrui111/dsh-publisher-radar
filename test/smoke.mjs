@@ -229,7 +229,7 @@ if (catalogFlag !== -1 && process.argv[catalogFlag + 1]) {
     const rows = gapIndex(result.catalog.entries);
     assert.equal(rows.length, TOPICS.length);
     const empties = rows.filter((r) => r.level === 'empty');
-    assert.ok(empties.length > 0, 'a 6.9k-plugin market should still have empty topics');
+    assert.ok(empties.length > 0, 'a large market should still have empty topics');
     console.log(`      ${result.catalog.entries.length} plugins · ${empties.length} empty topics · emptiest: ${empties.slice(0, 5).map((r) => r.label).join(', ')}`);
   });
 }
