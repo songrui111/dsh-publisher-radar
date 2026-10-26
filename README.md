@@ -1,11 +1,12 @@
-# dsh-publisher-radar · 插件雷达
+# dsh-publisher-radar · Publisher Radar
 
 **A browser for the DSH plugin market, plus the author's radar — install it and it works.**
 
-The sidebar **插件雷达** searches and pages through the **whole plugin market** — several
-thousand entries and growing, with the live count on the panel — drills from a market
-category to a topic to the plugins themselves, and hands you the install command for any
-one of them, while still ranking which corners are empty.
+The sidebar entry — **Publisher Radar**（插件雷达, the label DSH shows）— searches and pages
+through the **whole plugin market**: several thousand entries and growing, with the live
+count on the panel. It drills from a market category to a topic to the plugins themselves,
+and hands you the install command for any one of them, while still ranking which corners
+are empty.
 
 [简体中文](README.zh-CN.md) · MIT · [Publishing](PUBLISHING.md)
 
@@ -21,7 +22,7 @@ no way to see what a plugin is without leaving the app. Two harder questions fol
 2. *Will my package survive the market's install path?* — a missing
    `dsh.bundle.patch` or an install-time script makes a listing silently uninstallable.
 
-插件雷达 answers all three from one catalog: browse the whole market, find the empty
+Publisher Radar answers all three from one catalog: browse the whole market, find the empty
 corners, and copy the exact command that installs any plugin.
 
 ## What you see
@@ -30,9 +31,9 @@ A sidebar entry and five model tools — all from one catalog.
 
 | Surface | What it does |
 |---|---|
-| **插件雷达 panel** (sidebar) | Browse the whole market: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
-| Panel「方向」 | Category → topic → plugins, with coverage levels and both sort directions |
-| Panel「设置」 | Track your own npm packages; optional GitHub token (never required) |
+| **Publisher Radar** (sidebar) | Browse the whole market: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
+| Panel「方向 · Topics」 | Category → topic → plugins, with coverage levels and both sort directions |
+| Panel「设置 · Settings」 | Track your own npm packages; optional GitHub token (never required) |
 | `radar_gaps` | Which topics have 0–3 plugins? |
 | `radar_market` | How big is the market, what leads? |
 | `radar_plugin` | Who already did this? |
@@ -50,10 +51,10 @@ Nothing below is required to use it, and there is no setup step:
 - **Stars** — live from GitHub when the package has a repository (the catalog's URL, or
   the one npm publishes); otherwise the catalog's snapshot. A failure falls back
   silently instead of showing a broken number.
-- **Your plugins** — read from the panel's「设置」field, or auto-detected when the
-  workspace is your plugin folder (a `package.json` with `dsh.bundle`). A local
-  `file:` package that was never published still resolves — its manifest is in the
-  profile.
+- **Your plugins** — read from the panel's Settings field (「设置」in the UI), or
+  auto-detected when the workspace is your plugin folder (a `package.json` with
+  `dsh.bundle`). A local `file:` package that was never published still resolves — its
+  manifest is in the profile.
 
 ## Install
 
@@ -61,7 +62,7 @@ Nothing below is required to use it, and there is no setup step:
 dsh plugin --profile web add dsh-publisher-radar
 ```
 
-Restart the profile → the sidebar gains **插件雷达**.
+Restart the profile → the sidebar gains **Publisher Radar**.
 
 ## Optional config
 

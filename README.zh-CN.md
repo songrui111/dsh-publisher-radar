@@ -1,4 +1,4 @@
-# dsh-publisher-radar · 插件雷达
+# dsh-publisher-radar · 插件雷达（Publisher Radar）
 
 **DSH 插件市场浏览器 + 作者情报台——装上就能用。**
 
