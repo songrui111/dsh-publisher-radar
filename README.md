@@ -1,12 +1,13 @@
 # dsh-publisher-radar · Publisher Radar
 
-**A browser for the DSH plugin market, plus the author's radar — install it and it works.**
+**A market-gap radar for DSH plugin developers — see which directions are still open before
+you write the code.**
 
-The sidebar entry — **Publisher Radar**（插件雷达, the label DSH shows）— searches and pages
-through the **whole plugin market**: several thousand entries and growing, with the live
-count on the panel. It drills from a market category to a topic to the plugins themselves,
-and hands you the install command for any one of them, while still ranking which corners
-are empty.
+It answers one question: **which corners of this market are empty?** Several thousand
+plugins are split by category and then by topic, and every topic is tagged empty / thin /
+contested / crowded, so "what should I build next" becomes something you can look at rather
+than guess. Browsing the full market and copying install commands is what falls out of the
+same catalog, not the point.
 
 [简体中文](README.zh-CN.md) · MIT · [Publishing](PUBLISHING.md)
 
@@ -14,31 +15,34 @@ are empty.
 
 The DSH marketplace passed **6,000 plugins** in 2026 and keeps growing — the panel always
 shows the current count, because it reads the catalog rather than a number written here.
-Until now there was no way to look at that market from inside DSH — no search, no paging,
-no way to see what a plugin is without leaving the app. Two harder questions followed:
 
-1. *Is anyone already doing this?* — names collide (five authors ship a
-   `dsh-plugin-doctor`), and real competitors describe themselves with different words.
-2. *Will my package survive the market's install path?* — a missing
-   `dsh.bundle.patch` or an install-time script makes a listing silently uninstallable.
+The bigger that market gets, the harder "what should I build" becomes. What blocks a plugin
+author is rarely writing the code; it is finishing it and finding out somebody already shipped
+the same thing. Today that judgement comes from scrolling the list and going on memory:
 
-Publisher Radar answers all three from one catalog: browse the whole market, find the empty
-corners, and copy the exact command that installs any plugin.
+1. *Is this direction already taken?* — names collide (five authors ship a
+   `dsh-plugin-doctor`), while the real competitor describes itself in completely different
+   words and never shows up in a name search.
+2. *Is there still a gap inside a busy category?* — big categories like `ui` or `dev` hide
+   dozens of topics, some with thirty plugins and some with one or two.
+
+Publisher Radar splits the catalog by topic and makes "what's empty" visible at a glance.
 
 ## What you see
 
-A sidebar entry and five model tools — all from one catalog.
+A sidebar entry and five model tools — all from one catalog. **The topic view is the core**;
+the rest is supporting cast.
 
 | Surface | What it does |
 |---|---|
-| **Publisher Radar** (sidebar) | Browse the whole market: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
-| Panel「方向 · Topics」 | Category → topic → plugins, with coverage levels and both sort directions |
-| Panel「设置 · Settings」 | Track your own npm packages; optional GitHub token (never required) |
-| `radar_gaps` | Which topics have 0–3 plugins? |
-| `radar_market` | How big is the market, what leads? |
-| `radar_plugin` | Who already did this? |
-| `radar_checkup` | Will this folder survive a market install? |
+| `radar_gaps` | **The one you'll use most**: which topics have 0–3 plugins, ranked so the emptiest directions come first |
+| Panel「方向 · Topics」 | The same view with a UI: category → topic → plugins, four coverage levels, both sort directions |
+| `radar_plugin` | Who already took this topic, name or author — dedupe and competitor lookup |
+| `radar_market` | How big is the market, what leads, how each category is distributed |
 | `radar_mine` | My downloads, stars, catalog presence, category rank |
+| `radar_checkup` | Will this folder survive a market install? |
+| **Publisher Radar** (sidebar) | Browse the whole market: search, category filter, paging, sort by downloads / stars / date; open one for its install command |
+| Panel「设置 · Settings」 | Track your own npm packages; optional GitHub token (never required) |
 
 ## Zero configuration, on purpose
 
