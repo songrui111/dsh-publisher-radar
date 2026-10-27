@@ -1,6 +1,6 @@
 {
   "name": "dsh-publisher-radar",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Market-gap radar for DSH plugin developers: splits 6,000+ plugins by category and topic, tags each topic empty / thin / contested / crowded, and ranks the emptiest directions first — so you know what to build before writing it. Also browses the full market with copy-ready install commands. · 面向 DSH 插件开发者的市场空白雷达：把 6,000+ 插件按大类拆到方向，每档标出空位/稀少/有竞争/红海，空位最多的方向排前面——动手前先知道该做什么；市场全量浏览与安装命令作为附带能力。",
   "type": "module",
   "main": "index.js",
