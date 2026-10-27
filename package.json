@@ -35,6 +35,7 @@
     "test": "node test/smoke.mjs && node test/host.mjs && node test/client.mjs",
     "test:live": "node test/smoke.mjs --catalog ../market/plugins.json && node test/host.mjs --catalog ../market/plugins.json",
     "test:install": "npm pack --silent && node test/install.mjs",
+    "release": "node scripts/release.mjs",
     "sync": "node scripts/sync.mjs"
   },
   "keywords": [
