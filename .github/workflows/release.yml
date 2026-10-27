@@ -58,6 +58,18 @@ jobs:
         run: |
           set -euo pipefail
           echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
+          # Who is this token? Printing the identity turns "E404 on PUT" from a mystery
+          # into one of three known answers: wrong account, read-only token, or a
+          # granular token scoped to other packages.
+          echo "publishing as : $(npm whoami 2>&1 || echo '<token invalid>')"
+
+          version=$(node -p "require('./package.json').version")
+          if npm view "dsh-publisher-radar@${version}" version >/dev/null 2>&1; then
+            echo "::notice::dsh-publisher-radar@${version} is already on npm — nothing to publish"
+            exit 0
+          fi
+
           npm publish --access public 2>&1 | tee npm-publish.log || {
             echo "::error::npm publish failed: $(tail -20 npm-publish.log | tr '\n' ' ')"
             exit 1

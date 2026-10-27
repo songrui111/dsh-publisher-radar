@@ -56,6 +56,38 @@ git push origin main && git push origin v<x.y.z>
 The asset goes first (the market's critical path), then npm, so a failing publish
 fails the run without withholding the release.
 
+The npm step is **idempotent**: it prints which account the token belongs to, and exits
+green if that version is already on the registry. Re-running a release therefore never
+fails with "cannot publish over previously published versions".
+
+## When the CI npm step keeps failing
+
+`npm publish` answering **E404 on PUT** for a package that does not exist yet means the
+token cannot *create* that name. In order of likelihood:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `E404 … PUT … - Not found` | granular token scoped to other packages | new token with **All packages** + Read and write |
+| `E404`, token is Classic | token type is **Read-only** | recreate as **Automation** |
+| `E403 … one-time password` | token type is **Publish** (needs OTP) | recreate as **Automation** |
+| step `skipped` | secret absent or misnamed | must be exactly `NPM_TOKEN` under *Repository* secrets |
+
+Publishing locally sidesteps the token entirely and is the fastest way out:
+
+```sh
+npm login          # browser authorisation, one OTP at most
+npm whoami         # must print the account that owns the name
+npm publish --access public
+```
+
+v1.0.1 was shipped that way. Verify the result by artifact, not by the CLI's word:
+
+```sh
+npm view dsh-publisher-radar dist.shasum        # equals the tarball the CI packed
+npm view dsh-publisher-radar dist.unpackedSize  # a few hundred bytes means a stub got published
+node test/install.mjs dsh-publisher-radar@1.0.1 # install from the registry, then boot it
+```
+
 ## Catalog entry (the market listing)
 
 The market reads `https://awesome-dsh-plugin.com/plugins.json`, generated from the
