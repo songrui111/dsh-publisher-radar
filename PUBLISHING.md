@@ -101,9 +101,13 @@ url         : https://github.com/songrui111/dsh-publisher-radar
 page        : https://github.com/songrui111/dsh-publisher-radar#readme
 category    : tools          ← pick the bucket it belongs in from the catalog's own list
 npm         : dsh-publisher-radar
-description : 全量浏览 DSH 插件市场：6000+ 个插件可搜可翻可筛，一键复制安装命令；
-              另有空位榜、市场走势、竞品查询、自己插件的下载与 Star。
-              A browser for the whole DSH plugin market, plus author intelligence.
+description : 面向 DSH 插件开发者的市场空白雷达：把 6,000+ 个插件按大类拆到方向，
+              每档标出空位 / 稀少 / 有竞争 / 红海，空位最多的方向排前面——
+              动手前先知道该做什么。市场全量浏览与安装命令作为附带能力。
+              A market-gap radar for DSH plugin developers: splits the catalog by
+              category and topic, tags each topic empty / thin / contested / crowded,
+              and ranks the emptiest directions first. Also browses the full market
+              with copy-ready install commands.
 install     : dsh plugin --profile <profile> add dsh-publisher-radar
 ```
 
