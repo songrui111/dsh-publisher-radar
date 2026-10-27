@@ -70,7 +70,15 @@ jobs:
             exit 0
           fi
 
+          # The registry answers 202 and replicates later, so "not visible yet" and "not
+          # published" look the same for a while. A publish that comes back with
+          # "cannot publish over the previously published versions" means the version is
+          # already there — that is a success, not a failure.
           npm publish --access public 2>&1 | tee npm-publish.log || {
+            if grep -q 'previously published versions' npm-publish.log; then
+              echo "::notice::dsh-publisher-radar@${version} was already published (registry replicas lag) — treating as success"
+              exit 0
+            fi
             echo "::error::npm publish failed: $(tail -20 npm-publish.log | tr '\n' ' ')"
             exit 1
           }

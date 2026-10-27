@@ -80,8 +80,22 @@ try {
 ok(`logged in as ${whoami}`);
 
 const status = git(['status', '--porcelain']).trim();
-if (status !== '') fail('working tree is dirty', `commit or stash first:\n${status}`);
-ok('working tree clean');
+if (status !== '') {
+  // `--tag-only` is defined below but the flag decides what a dirty tree means: a
+  // resumed release is *supposed* to have the bumped package.json uncommitted, and
+  // must not be blocked by it. Anything else is still an error.
+  const resumed = args.includes('--tag-only') || args.includes('--resume');
+  const unexpected = status.split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^[AM]\s+package\.json$/.test(line));
+  if (!resumed || unexpected.length > 0) {
+    fail('working tree is dirty', `commit or stash first:\n${status}`);
+  }
+  ok('working tree clean except the bumped package.json');
+} else {
+  ok('working tree clean');
+}
 
 const branch = git(['rev-parse', '--abbrev-ref', 'HEAD']).trim();
 if (branch !== 'main') fail(`on branch ${branch}, not main`, 'git switch main');
@@ -94,8 +108,13 @@ try {
 }
 ok('origin configured');
 
+// `--tag-only` picks up after a publish that npm accepted but this script did not see
+// replicate in time: it skips bump and publish, proves the version is on the registry,
+// then does the commit + tag + push that were left undone.
+const tagOnly = args.includes('--tag-only') || args.includes('--resume');
+
 // The whole point of this script: never tag a version that is not on npm yet.
-const alreadyPublished = (() => {
+const onRegistry = (() => {
   try {
     npm(['view', `${PACKAGE}@${next}`, 'version'], { stdio: 'pipe' });
     return true;
@@ -103,8 +122,15 @@ const alreadyPublished = (() => {
     return false;
   }
 })();
-if (alreadyPublished) fail(`${PACKAGE}@${next} is already on the registry`, 'pick a different version');
-ok(`${PACKAGE}@${next} is not on the registry yet`);
+
+if (tagOnly) {
+  if (pkg.version !== next) fail(`package.json says ${pkg.version}, not ${next}`, 'run without --tag-only for a fresh release');
+  if (!onRegistry) fail(`${PACKAGE}@${next} is still not on the registry`, 'the publish may still be processing — check npmjs.com, or publish again');
+  ok(`${PACKAGE}@${next} is on the registry — resuming at commit + tag`);
+} else {
+  if (onRegistry) fail(`${PACKAGE}@${next} is already on the registry`, `use: node scripts/release.mjs ${next} --tag-only`);
+  ok(`${PACKAGE}@${next} is not on the registry yet`);
+}
 
 if (git(['tag', '-l', `v${next}`]).trim() !== '') fail(`tag v${next} already exists locally`, 'delete it or pick another version');
 ok(`tag v${next} is free`);
@@ -115,22 +141,28 @@ if (dryRun) {
 }
 
 // ------------------------------------------------------------------------ publish
-step(`bump ${current} → ${next}`);
-npm(['version', next, '--no-git-tag-version'], { stdio: 'inherit' });
+if (!tagOnly) {
+  step(`bump ${current} → ${next}`);
+  npm(['version', next, '--no-git-tag-version'], { stdio: 'inherit' });
 
-step('npm publish');
-try {
-  npm(['publish', '--access', 'public'], { stdio: 'inherit' });
-} catch {
-  step('publish failed — reverting the version bump and stopping before any tag');
-  git(['checkout', '--', 'package.json']);
-  fail('nothing was published and nothing was tagged', 'fix the npm error above, then run this again');
+  step('npm publish');
+  try {
+    npm(['publish', '--access', 'public'], { stdio: 'inherit' });
+  } catch {
+    step('publish failed — reverting the version bump and stopping before any tag');
+    git(['checkout', '--', 'package.json']);
+    fail('nothing was published and nothing was tagged', 'fix the npm error above, then run this again');
+  }
 }
 
 // ------------------------------------------------------------------------ verify
-step('verify on the registry (caches lag; retry a few times)');
+// npm answers the upload with 202 ("accepted, may take a few minutes") and the read
+// replicas follow later. Tagging before the registry can see the version is what makes
+// the CI run red, so this waits — and if it gives up, it says how to resume without
+// publishing twice.
+step('verify on the registry (npm answers 202 first; replicas lag)');
 let published = null;
-for (let attempt = 1; attempt <= 8; attempt += 1) {
+for (let attempt = 1; attempt <= 20; attempt += 1) {
   try {
     const res = await fetch(`${REGISTRY}${PACKAGE}`, { headers: { accept: 'application/json' } });
     if (res.ok) {
@@ -142,9 +174,15 @@ for (let attempt = 1; attempt <= 8; attempt += 1) {
       }
     }
   } catch { /* registry hiccup; retry */ }
-  await new Promise((resolve) => setTimeout(resolve, 3000));
+  process.stdout.write(`  … waiting for ${PACKAGE}@${next} (${attempt}/20)\n`);
+  await new Promise((resolve) => setTimeout(resolve, 6000));
 }
-if (published === null) fail('published, but the registry did not show the version yet', 'check https://www.npmjs.com/package/dsh-publisher-radar before tagging');
+if (published === null) {
+  fail(
+    `npm accepted the upload, but the registry still does not show ${next} after ~2 minutes`,
+    `check https://www.npmjs.com/package/${PACKAGE} — once it appears, finish with:\n     node scripts/release.mjs ${next} --tag-only`,
+  );
+}
 if (published.dist.fileCount < 10) fail(`only ${published.dist.fileCount} files in the published tarball — that is a stub, not the plugin`, 'fix and republish under a new version');
 ok(`latest ${published.latest} · ${published.dist.fileCount} files · ${published.dist.unpackedSize} bytes · shasum ${published.dist.shasum}`);
 
